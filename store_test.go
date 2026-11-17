@@ -61,7 +61,7 @@ func TestPostgresOutbox(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	j := job{ID: id.String(), Bucket: "bucket", Key: "key", Filename: "file", ContentType: "text/plain", Size: 5, CreatedAt: time.Now().UTC()}
+	j := Job{ID: id.String(), Bucket: "bucket", Key: "key", Filename: "file", ContentType: "text/plain", Size: 5, CreatedAt: time.Now().UTC()}
 	if err := store.createJob(ctx, j); err != nil {
 		t.Fatal(err)
 	}
@@ -80,7 +80,7 @@ func TestPostgresOutbox(t *testing.T) {
 	if sent, err := store.publishOne(ctx, sender); !sent || err != nil {
 		t.Fatalf("retry failed: sent=%v err=%v", sent, err)
 	}
-	var delivered job
+	var delivered Job
 	if err := json.Unmarshal(sender.payload, &delivered); err != nil || sender.id != j.ID || delivered.ID != j.ID || delivered.Key != j.Key {
 		t.Fatalf("unexpected message: id=%s payload=%s err=%v", sender.id, sender.payload, err)
 	}

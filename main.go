@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/bytedance/gopkg/util/logger"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -49,8 +50,11 @@ func run(cfg *appconfig.AppConfig) error {
 	store := &postgresStore{pool: pool}
 	sender := &sqsSender{client: sqs.NewFromConfig(awsCfg), queueURL: cfg.AWS.QueueURL}
 	handler := &submitHandler{
-		bucket: cfg.AWS.Bucket, maxBody: cfg.App.MaxBodyBytes, objects: &s3Store{client: s3.NewFromConfig(awsCfg)},
-		jobs: store,
+		Config:  cfg,
+		bucket:  cfg.AWS.Bucket,
+		maxBody: cfg.App.MaxBodyBytes,
+		objects: &s3Store{client: s3.NewFromConfig(awsCfg)},
+		jobs:    store,
 	}
 
 	re := access.NewRuleEngine()
@@ -61,7 +65,21 @@ func run(cfg *appconfig.AppConfig) error {
 	rulesMiddleware := middleware.AccessTokenRulesMiddleware(claimsParser, re)
 
 	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery())
+	router.SetTrustedProxies(cfg.App.TrustedProxies)
+
+	//router.Use(gin.Logger(), gin.Recovery())
+
+	corsConfig := cors.Config{
+		AllowOrigins:     cfg.Cors.AllowOrigins,
+		AllowMethods:     cfg.Cors.AllowMethods,
+		AllowHeaders:     cfg.Cors.AllowHeaders,
+		AllowCredentials: cfg.Cors.AllowCredentials,
+		MaxAge:           time.Duration(cfg.Cors.MaxAge) * time.Second,
+	}
+
+	router.Use(cors.New(corsConfig))                // Check CORS first
+	router.Use(middleware.ErrorHandlerMiddleware()) // Handle errors early
+
 	router.MaxMultipartMemory = cfg.App.MaxBodyBytes // 8 << 20
 
 	v1 := router.Group("/v1")

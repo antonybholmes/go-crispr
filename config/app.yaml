@@ -6,6 +6,27 @@ app:
   trustedProxies:
     - 127.0.0.1
     - ::1
-
   maxBodyBytes: 104857600
   pollIntervalSeconds: 10
+
+cors:
+  allowOrigins:
+    - http://localhost:3000
+    - http://localhost:8000
+    - https://crispr.rdf-lab.org
+
+  allowMethods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+  allowHeaders:
+    - Origin
+    - Content-Type
+    - Authorization
+    - X-CSRF-Token
+  allowCredentials: true
+  maxAge: 43200
+
+aws:
+  folder: "jobs/crispr/"

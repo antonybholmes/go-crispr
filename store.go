@@ -18,7 +18,7 @@ type postgresStore struct {
 	pool *pgxpool.Pool
 }
 
-func (s *postgresStore) createJob(ctx context.Context, j job) error {
+func (s *postgresStore) createJob(ctx context.Context, j Job) error {
 	payload, err := json.Marshal(j)
 	if err != nil {
 		return fmt.Errorf("marshal job: %w", err)

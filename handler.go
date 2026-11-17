@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"errors"
+	"go-crispr/config"
 	"io"
 	"net/http"
 	"strings"
@@ -10,12 +11,16 @@ import (
 	"unicode/utf8"
 
 	"github.com/antonybholmes/go-sys/log"
+	"github.com/antonybholmes/go-web"
+	"github.com/antonybholmes/go-web/middleware"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
-type job struct {
+type Job struct {
 	ID          string    `json:"id"`
+	UserID      string    `json:"userId"`
+	Email       string    `json:"email"`
 	Type        string    `json:"type"`
 	Bucket      string    `json:"bucket"`
 	Key         string    `json:"key"`
@@ -26,14 +31,15 @@ type job struct {
 }
 
 type objectStore interface {
-	upload(ctx context.Context, job job, body io.ReadSeeker) error
+	upload(ctx context.Context, job Job, body io.ReadSeeker) error
 }
 
 type jobStore interface {
-	createJob(ctx context.Context, job job) error
+	createJob(ctx context.Context, job Job) error
 }
 
 type submitHandler struct {
+	Config  *config.AppConfig
 	bucket  string
 	maxBody int64
 	objects objectStore
@@ -41,6 +47,13 @@ type submitHandler struct {
 }
 
 func (h *submitHandler) submit(c *gin.Context) {
+	user, err := middleware.GetJwtUser(c)
+
+	if err != nil {
+		c.Error(err)
+		return
+	}
+
 	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, h.maxBody)
 
 	file, fileHeader, err := c.Request.FormFile("file")
@@ -59,7 +72,7 @@ func (h *submitHandler) submit(c *gin.Context) {
 		if errors.As(err, &tooLarge) {
 			c.JSON(http.StatusRequestEntityTooLarge, gin.H{"error": "request body too large"})
 		} else {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "a multipart file field named file is required"})
+			web.BadReqResp(c, errors.New("a multipart file field named file is required"))
 		}
 		return
 	}
@@ -68,23 +81,28 @@ func (h *submitHandler) submit(c *gin.Context) {
 	id, err := uuid.NewV7()
 	if err != nil {
 		log.Error().Msgf("generate job ID: %v", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create job"})
+
+		web.InternalErrorResp(c, errors.New("could not create job"))
 		return
 	}
+
 	contentType := fileHeader.Header.Get("Content-Type")
 	if contentType == "" {
 		contentType = "application/octet-stream"
 	}
+
 	if !validMetadata(fileHeader.Filename, 1024) || !validMetadata(contentType, 255) {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file metadata"})
+		web.BadReqResp(c, errors.New("invalid file metadata"))
 		return
 	}
 
-	j := job{
+	j := Job{
 		ID:          id.String(),
+		UserID:      user.Subject,
+		Email:       user.Email,
 		Type:        "crispr", // or "crispr" depending on the job type
 		Bucket:      h.bucket,
-		Key:         "jobs/" + id.String() + "/upload",
+		Key:         "users/" + user.Subject + "/jobs/crispr/" + id.String() + "/upload",
 		Filename:    fileHeader.Filename,
 		ContentType: contentType,
 		Size:        fileHeader.Size,
@@ -101,7 +119,7 @@ func (h *submitHandler) submit(c *gin.Context) {
 		// A failed commit can have an unknown outcome, so deleting the object here
 		// could destroy a successfully committed job's input.
 		log.Error().Msgf("persist uploaded job; object may need reconciliation: job_id=%s bucket=%s key=%s error=%v", j.ID, j.Bucket, j.Key, err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not persist job"})
+		web.InternalErrorResp(c, errors.New("could not persist job"))
 		return
 	}
 	c.JSON(http.StatusAccepted, gin.H{"job_id": j.ID})

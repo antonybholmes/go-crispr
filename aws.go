@@ -15,7 +15,7 @@ type s3Store struct {
 	client *s3.Client
 }
 
-func (s *s3Store) upload(ctx context.Context, j job, body io.ReadSeeker) error {
+func (s *s3Store) upload(ctx context.Context, j Job, body io.ReadSeeker) error {
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(j.Bucket), Key: aws.String(j.Key), Body: body,
 		ContentLength: aws.Int64(j.Size), ContentType: aws.String(j.ContentType),

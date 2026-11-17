@@ -50,7 +50,7 @@ func TestAWSAdapters(t *testing.T) {
 		o.BaseEndpoint = aws.String(server.URL)
 		o.UsePathStyle = true
 	})}
-	j := job{Bucket: "bucket", Key: "jobs/id/upload", ContentType: "text/plain", Size: 5}
+	j := Job{Bucket: "bucket", Key: "jobs/id/upload", ContentType: "text/plain", Size: 5}
 	if err := objects.upload(context.Background(), j, strings.NewReader("hello")); err != nil {
 		t.Fatal(err)
 	}

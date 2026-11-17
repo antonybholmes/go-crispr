@@ -23,6 +23,13 @@ type AppConfig struct {
 		MaxBodyBytes    int64    `yaml:"maxBodyBytes"`
 		PollIntervalSec int      `yaml:"pollIntervalSeconds"`
 	} `yaml:"app"`
+	Cors struct {
+		AllowOrigins     []string `yaml:"allowOrigins"`
+		AllowMethods     []string `yaml:"allowMethods"`
+		AllowHeaders     []string `yaml:"allowHeaders"`
+		AllowCredentials bool     `yaml:"allowCredentials"`
+		MaxAge           int      `yaml:"maxAge"`
+	} `yaml:"cors"`
 	Auth struct {
 		Keys struct {
 			JwtES256PrivateKey *ecdsa.PrivateKey `yaml:"-"`
@@ -30,6 +37,7 @@ type AppConfig struct {
 		} `yaml:"-"`
 	} `yaml:"-"`
 	AWS struct {
+		Folder   string `yaml:"folder"`
 		Bucket   string `yaml:"-"`
 		QueueURL string `yaml:"-"`
 	} `yaml:"-"`
@@ -63,8 +71,8 @@ func LoadConfig() *AppConfig {
 	}
 
 	cfg.App.DatabaseURL = envOr("DATABASE_URL", cfg.App.DatabaseURL)
-	cfg.AWS.Bucket = envOr("BUCKET", cfg.AWS.Bucket)
-	cfg.AWS.QueueURL = envOr("SQS_QUEUE_URL", cfg.AWS.QueueURL)
+	cfg.AWS.Bucket = envOr("AWS_BUCKET", cfg.AWS.Bucket)
+	cfg.AWS.QueueURL = envOr("AWS_SQS_QUEUE_URL", cfg.AWS.QueueURL)
 
 	//
 	// Load EC keys
