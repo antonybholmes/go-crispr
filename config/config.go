@@ -13,13 +13,12 @@ import (
 
 type AppConfig struct {
 	App struct {
-		URL             string   `yaml:"url"`
-		Domain          string   `yaml:"domain"`
-		LogFile         string   `yaml:"logFile"`
-		Port            string   `yaml:"port"`
-		DatabaseURL     string   `yaml:"databaseUrl"`
-		Bucket          string   `yaml:"bucket"`
-		QueueURL        string   `yaml:"queueUrl"`
+		URL         string `yaml:"url"`
+		Domain      string `yaml:"domain"`
+		LogFile     string `yaml:"logFile"`
+		Port        string `yaml:"port"`
+		DatabaseURL string `yaml:"-"`
+
 		TrustedProxies  []string `yaml:"trustedProxies"`
 		MaxBodyBytes    int64    `yaml:"maxBodyBytes"`
 		PollIntervalSec int      `yaml:"pollIntervalSeconds"`
@@ -29,6 +28,10 @@ type AppConfig struct {
 			JwtES256PrivateKey *ecdsa.PrivateKey `yaml:"-"`
 			JwtES256PublicKey  *ecdsa.PublicKey  `yaml:"-"`
 		} `yaml:"-"`
+	} `yaml:"-"`
+	AWS struct {
+		Bucket   string `yaml:"-"`
+		QueueURL string `yaml:"-"`
 	} `yaml:"-"`
 }
 
@@ -58,6 +61,10 @@ func LoadConfig() *AppConfig {
 		log.Fatal().Msgf("failed to parse config file: %v", err)
 		os.Exit(1)
 	}
+
+	cfg.App.DatabaseURL = envOr("DATABASE_URL", cfg.App.DatabaseURL)
+	cfg.AWS.Bucket = envOr("BUCKET", cfg.AWS.Bucket)
+	cfg.AWS.QueueURL = envOr("SQS_QUEUE_URL", cfg.AWS.QueueURL)
 
 	//
 	// Load EC keys

@@ -47,9 +47,9 @@ func run(cfg *appconfig.AppConfig) error {
 	}
 
 	store := &postgresStore{pool: pool}
-	sender := &sqsSender{client: sqs.NewFromConfig(awsCfg), queueURL: cfg.App.QueueURL}
+	sender := &sqsSender{client: sqs.NewFromConfig(awsCfg), queueURL: cfg.AWS.QueueURL}
 	handler := &submitHandler{
-		bucket: cfg.App.Bucket, maxBody: cfg.App.MaxBodyBytes, objects: &s3Store{client: s3.NewFromConfig(awsCfg)},
+		bucket: cfg.AWS.Bucket, maxBody: cfg.App.MaxBodyBytes, objects: &s3Store{client: s3.NewFromConfig(awsCfg)},
 		jobs: store,
 	}
 
