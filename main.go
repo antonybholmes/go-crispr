@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/antonybholmes/go-sys/log"
+	"github.com/antonybholmes/go-web/access"
+	"github.com/antonybholmes/go-web/middleware"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -51,10 +53,21 @@ func run(cfg *appconfig.AppConfig) error {
 		jobs: store,
 	}
 
+	re := access.NewRuleEngine()
+	re.LoadRules("config/access-rules.json")
+
+	claimsParser := middleware.NewUserJWTParser(middleware.NewJwtClaimsES256Parser(cfg.Auth.Keys.JwtES256PublicKey))
+	//jwtUserMiddleWare := middleware.UserJWTMiddleware(claimsParser)
+	rulesMiddleware := middleware.AccessTokenRulesMiddleware(claimsParser, re)
+
 	router := gin.New()
 	router.Use(gin.Logger(), gin.Recovery())
-	router.MaxMultipartMemory = 8 << 20
-	router.POST("/submit", handler.submit)
+	router.MaxMultipartMemory = cfg.App.MaxBodyBytes // 8 << 20
+
+	v1 := router.Group("/v1")
+
+	crispr := v1.Group("/crispr", rulesMiddleware)
+	crispr.POST("/submit", handler.submit)
 
 	// The outbox runs alongside HTTP so it can publish accepted jobs to SQS.
 	go runOutbox(ctx, store, sender, time.Duration(cfg.App.PollIntervalSec)*time.Second)

@@ -1,0 +1,249 @@
+{
+  "version": "1.0.0",
+  "updated": "Nov 17, 2025",
+  "rules": [
+    {
+      "path": "/admin/users",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [
+            {
+              "type": "access",
+              "permissions": ["*:*"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/admin/groups",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [
+            {
+              "type": "access",
+              "permissions": ["*:*"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/admin/roles",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [
+            {
+              "type": "access",
+              "permissions": ["*:*"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/admin/users/stats",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [
+            {
+              "type": "access",
+              "permissions": ["*:*"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/admin/users/update",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [
+            {
+              "type": "access",
+              "permissions": ["*:*"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/admin/users/add",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [
+            {
+              "type": "access",
+              "permissions": ["*:*"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/admin/users/:id/delete",
+      "methods": [
+        {
+          "type": "DELETE",
+          "tokens": [
+            {
+              "type": "access",
+              "permissions": ["*:*"]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "path": "/modules/scrna/assemblies/:assembly/datasets",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/scrna/datasets/:dataset/genes",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/scrna/datasets/:dataset/metadata",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/scrna/datasets/:dataset/gex",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/seqs/genomes",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+
+    {
+      "path": "/modules/seqs/assemblies/:assembly/samples",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/seqs/bins",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/beds/assemblies/:assembly/samples",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/beds/regions",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/wgs/assemblies/:assembly/datasets",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/wgs/assemblies/:assembly/variants",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/wgs/assemblies/:assembly/mafs",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/wgs/assemblies/:assembly/pileup",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/gex/datasets",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/gex/types/:type/expression",
+      "methods": [
+        {
+          "type": "POST",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    },
+    {
+      "path": "/modules/hubs/assemblies/:assembly/datasets",
+      "methods": [
+        {
+          "type": "GET",
+          "tokens": [{ "type": "access", "permissions": ["ngs:view"] }]
+        }
+      ]
+    }
+  ]
+}

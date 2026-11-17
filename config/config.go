@@ -1,10 +1,12 @@
 package config
 
 import (
+	"crypto/ecdsa"
 	"os"
 	"sync"
 
 	"github.com/antonybholmes/go-sys/log"
+	"github.com/golang-jwt/jwt/v5"
 
 	"go.yaml.in/yaml/v4"
 )
@@ -15,13 +17,19 @@ type AppConfig struct {
 		Domain          string   `yaml:"domain"`
 		LogFile         string   `yaml:"logFile"`
 		Port            string   `yaml:"port"`
-		TrustedProxies  []string `yaml:"trustedProxies"`
 		DatabaseURL     string   `yaml:"databaseUrl"`
 		Bucket          string   `yaml:"bucket"`
 		QueueURL        string   `yaml:"queueUrl"`
+		TrustedProxies  []string `yaml:"trustedProxies"`
 		MaxBodyBytes    int64    `yaml:"maxBodyBytes"`
 		PollIntervalSec int      `yaml:"pollIntervalSeconds"`
 	} `yaml:"app"`
+	Auth struct {
+		Keys struct {
+			JwtES256PrivateKey *ecdsa.PrivateKey `yaml:"-"`
+			JwtES256PublicKey  *ecdsa.PublicKey  `yaml:"-"`
+		} `yaml:"-"`
+	} `yaml:"-"`
 }
 
 const (
@@ -49,6 +57,30 @@ func LoadConfig() *AppConfig {
 	if err := yaml.Load(data, &cfg); err != nil {
 		log.Fatal().Msgf("failed to parse config file: %v", err)
 		os.Exit(1)
+	}
+
+	//
+	// Load EC keys
+	//
+
+	bytes, err := os.ReadFile("jwt.es256.private.pem")
+	if err != nil {
+		log.Fatal().Msgf("%s", err)
+	}
+
+	cfg.Auth.Keys.JwtES256PrivateKey, err = jwt.ParseECPrivateKeyFromPEM(bytes)
+	if err != nil {
+		log.Fatal().Msgf("%s", err)
+	}
+
+	bytes, err = os.ReadFile("jwt.es256.public.pem")
+	if err != nil {
+		log.Fatal().Msgf("%s", err)
+	}
+
+	cfg.Auth.Keys.JwtES256PublicKey, err = jwt.ParseECPublicKeyFromPEM(bytes)
+	if err != nil {
+		log.Fatal().Msgf("%s", err)
 	}
 
 	return &cfg
