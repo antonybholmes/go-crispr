@@ -44,8 +44,8 @@ type AppConfig struct {
 }
 
 const (
-	Name       = "CRISPR Job Server"
-	AppName    = "crispr-job-server"
+	Name       = "EDB Job Server"
+	AppName    = "edb-job-server"
 	Copyright  = "Copyright (C) 2026 Antony Holmes"
 	ConfigFile = "config/app.yaml"
 )
