@@ -18,10 +18,12 @@ type AppConfig struct {
 			JwtES256PublicKey  *ecdsa.PublicKey  `yaml:"-"`
 		} `yaml:"-"`
 	} `yaml:"-"`
-	AWS struct {
-		Folder   string `yaml:"folder"`
-		Bucket   string `yaml:"-"`
-		QueueURL string `yaml:"-"`
+	Aws struct {
+		Folder string `yaml:"folder"`
+		Bucket string `yaml:"-"`
+		Sqs    struct {
+			QueueURL string `yaml:"-"`
+		} `yaml:"-"`
 	} `yaml:"-"`
 	App struct {
 		URL             string   `yaml:"url"`
@@ -70,8 +72,8 @@ func LoadConfig() *AppConfig {
 	}
 
 	cfg.App.DatabaseURL = envOr("DATABASE_URL", cfg.App.DatabaseURL)
-	cfg.AWS.Bucket = envOr("AWS_BUCKET", cfg.AWS.Bucket)
-	cfg.AWS.QueueURL = envOr("AWS_SQS_QUEUE_URL", cfg.AWS.QueueURL)
+	cfg.Aws.Bucket = envOr("AWS_BUCKET", cfg.Aws.Bucket)
+	cfg.Aws.Sqs.QueueURL = envOr("AWS_SQS_QUEUE_URL", cfg.Aws.Sqs.QueueURL)
 
 	//
 	// Load EC keys

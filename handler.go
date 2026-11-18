@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"go-crispr/config"
+	"go-jobserver/config"
 	"io"
 	"net/http"
 	"strings"
@@ -18,23 +18,23 @@ import (
 	"github.com/google/uuid"
 )
 
-type objectStore interface {
-	upload(ctx context.Context, job jobs.Job, body io.ReadSeeker) error
+type ObjectStore interface {
+	Upload(ctx context.Context, job jobs.Job, body io.ReadSeeker) error
 }
 
-type jobStore interface {
-	createJob(ctx context.Context, job jobs.Job) error
+type JobStore interface {
+	CreateJob(ctx context.Context, job jobs.Job) error
 }
 
-type submitHandler struct {
-	Config  *config.AppConfig
-	bucket  string
-	maxBody int64
-	objects objectStore
-	jobs    jobStore
+type SubmitHandler struct {
+	Config      *config.AppConfig
+	bucket      string
+	maxBody     int64
+	objectStore ObjectStore
+	jobStore    JobStore
 }
 
-func (h *submitHandler) submit(c *gin.Context) {
+func (h *SubmitHandler) Submit(c *gin.Context) {
 	user, err := middleware.GetJwtUser(c)
 
 	if err != nil {
@@ -97,13 +97,13 @@ func (h *submitHandler) submit(c *gin.Context) {
 		CreatedAt:   time.Now().UTC(),
 	}
 
-	if err := h.objects.upload(c.Request.Context(), j, file); err != nil {
+	if err := h.objectStore.Upload(c.Request.Context(), j, file); err != nil {
 		log.Error().Msgf("upload job file: job_id=%s error=%v", j.ID, err)
 		c.JSON(http.StatusBadGateway, gin.H{"error": "file upload failed"})
 		return
 	}
 
-	if err := h.jobs.createJob(c.Request.Context(), j); err != nil {
+	if err := h.jobStore.CreateJob(c.Request.Context(), j); err != nil {
 		// A failed commit can have an unknown outcome, so deleting the object here
 		// could destroy a successfully committed job's input.
 		log.Error().Msgf("persist uploaded job; object may need reconciliation: job_id=%s bucket=%s key=%s error=%v", j.ID, j.Bucket, j.Key, err)

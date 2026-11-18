@@ -12,14 +12,24 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+type (
+	PostgresStore struct {
+		pool *pgxpool.Pool
+	}
+
+	MessageSender interface {
+		Send(ctx context.Context, payload []byte) error
+	}
+
+	OutboxPublisher interface {
+		PublishOne(context.Context, MessageSender) (bool, error)
+	}
+)
+
 //go:embed schema.sql
 var schema string
 
-type postgresStore struct {
-	pool *pgxpool.Pool
-}
-
-func (s *postgresStore) createJob(ctx context.Context, j jobs.Job) error {
+func (s *PostgresStore) CreateJob(ctx context.Context, j jobs.Job) error {
 	payload, err := json.Marshal(j)
 	if err != nil {
 		return fmt.Errorf("marshal job: %w", err)
@@ -55,11 +65,7 @@ func (s *postgresStore) createJob(ctx context.Context, j jobs.Job) error {
 	return nil
 }
 
-type messageSender interface {
-	send(ctx context.Context, id string, payload []byte) error
-}
-
-func (s *postgresStore) publishOne(ctx context.Context, sender messageSender) (bool, error) {
+func (s *PostgresStore) PublishOne(ctx context.Context, sender MessageSender) (bool, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return false, fmt.Errorf("begin outbox transaction: %w", err)
@@ -68,16 +74,21 @@ func (s *postgresStore) publishOne(ctx context.Context, sender messageSender) (b
 
 	var id string
 	var payload []byte
-	err = tx.QueryRow(ctx, `SELECT job_id::text, payload FROM job_outbox
+
+	err = tx.QueryRow(ctx, `SELECT 
+		job_id::text, 
+		payload 
+		FROM job_outbox
 		WHERE published_at IS NULL ORDER BY created_at, job_id
 		FOR UPDATE SKIP LOCKED LIMIT 1`).Scan(&id, &payload)
+
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
 	if err != nil {
 		return false, fmt.Errorf("select outbox message: %w", err)
 	}
-	if err := sender.send(ctx, id, payload); err != nil {
+	if err := sender.Send(ctx, payload); err != nil {
 		return false, fmt.Errorf("send job %s: %w", id, err)
 	}
 	if _, err := tx.Exec(ctx, `UPDATE job_outbox SET published_at = now() WHERE job_id = $1`, id); err != nil {
