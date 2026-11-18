@@ -12,24 +12,6 @@ import (
 )
 
 type AppConfig struct {
-	App struct {
-		URL         string `yaml:"url"`
-		Domain      string `yaml:"domain"`
-		LogFile     string `yaml:"logFile"`
-		Port        string `yaml:"port"`
-		DatabaseURL string `yaml:"-"`
-
-		TrustedProxies  []string `yaml:"trustedProxies"`
-		MaxBodyBytes    int64    `yaml:"maxBodyBytes"`
-		PollIntervalSec int      `yaml:"pollIntervalSeconds"`
-	} `yaml:"app"`
-	Cors struct {
-		AllowOrigins     []string `yaml:"allowOrigins"`
-		AllowMethods     []string `yaml:"allowMethods"`
-		AllowHeaders     []string `yaml:"allowHeaders"`
-		AllowCredentials bool     `yaml:"allowCredentials"`
-		MaxAge           int      `yaml:"maxAge"`
-	} `yaml:"cors"`
 	Auth struct {
 		Keys struct {
 			JwtES256PrivateKey *ecdsa.PrivateKey `yaml:"-"`
@@ -41,6 +23,23 @@ type AppConfig struct {
 		Bucket   string `yaml:"-"`
 		QueueURL string `yaml:"-"`
 	} `yaml:"-"`
+	App struct {
+		URL             string   `yaml:"url"`
+		Domain          string   `yaml:"domain"`
+		LogFile         string   `yaml:"logFile"`
+		Port            string   `yaml:"port"`
+		DatabaseURL     string   `yaml:"-"`
+		TrustedProxies  []string `yaml:"trustedProxies"`
+		MaxBodyBytes    int64    `yaml:"maxBodyBytes"`
+		PollIntervalSec int      `yaml:"pollIntervalSeconds"`
+	} `yaml:"app"`
+	Cors struct {
+		AllowOrigins     []string `yaml:"allowOrigins"`
+		AllowMethods     []string `yaml:"allowMethods"`
+		AllowHeaders     []string `yaml:"allowHeaders"`
+		AllowCredentials bool     `yaml:"allowCredentials"`
+		MaxAge           int      `yaml:"maxAge"`
+	} `yaml:"cors"`
 }
 
 const (

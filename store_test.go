@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antonybholmes/go-jobs"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -61,13 +62,13 @@ func TestPostgresOutbox(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	j := Job{ID: id.String(), Bucket: "bucket", Key: "key", Filename: "file", ContentType: "text/plain", Size: 5, CreatedAt: time.Now().UTC()}
+	j := jobs.Job{ID: id.String(), Bucket: "bucket", Key: "key", Filename: "file", ContentType: "text/plain", Size: 5, CreatedAt: time.Now().UTC()}
 	if err := store.createJob(ctx, j); err != nil {
 		t.Fatal(err)
 	}
-	var jobs, pending int
-	if err := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM jobs), (SELECT count(*) FROM job_outbox WHERE published_at IS NULL)").Scan(&jobs, &pending); err != nil || jobs != 1 || pending != 1 {
-		t.Fatalf("job and outbox not committed together: jobs=%d pending=%d err=%v", jobs, pending, err)
+	var jobCount, pending int
+	if err := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM jobs), (SELECT count(*) FROM job_outbox WHERE published_at IS NULL)").Scan(&jobCount, &pending); err != nil || jobCount != 1 || pending != 1 {
+		t.Fatalf("job and outbox not committed together: jobs=%d pending=%d err=%v", jobCount, pending, err)
 	}
 	sender := &fakeSender{err: errors.New("SQS unavailable")}
 	if sent, err := store.publishOne(ctx, sender); sent || err == nil {
@@ -80,7 +81,7 @@ func TestPostgresOutbox(t *testing.T) {
 	if sent, err := store.publishOne(ctx, sender); !sent || err != nil {
 		t.Fatalf("retry failed: sent=%v err=%v", sent, err)
 	}
-	var delivered Job
+	var delivered jobs.Job
 	if err := json.Unmarshal(sender.payload, &delivered); err != nil || sender.id != j.ID || delivered.ID != j.ID || delivered.Key != j.Key {
 		t.Fatalf("unexpected message: id=%s payload=%s err=%v", sender.id, sender.payload, err)
 	}
@@ -98,7 +99,7 @@ func TestPostgresOutbox(t *testing.T) {
 	if err := store.createJob(ctx, second); err == nil {
 		t.Fatal("expected outbox insert failure")
 	}
-	if err := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE id=$1", second.ID).Scan(&jobs); err != nil || jobs != 0 {
-		t.Fatalf("job insert was not rolled back: count=%d err=%v", jobs, err)
+	if err := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE id=$1", second.ID).Scan(&jobCount); err != nil || jobCount != 0 {
+		t.Fatalf("job insert was not rolled back: count=%d err=%v", jobCount, err)
 	}
 }

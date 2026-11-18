@@ -12,18 +12,19 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/antonybholmes/go-jobs"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type fakeObjects struct {
 	called bool
-	job    Job
+	job    jobs.Job
 	data   []byte
 	err    error
 }
 
-func (f *fakeObjects) upload(_ context.Context, j Job, body io.ReadSeeker) error {
+func (f *fakeObjects) upload(_ context.Context, j jobs.Job, body io.ReadSeeker) error {
 	f.called, f.job = true, j
 	f.data, _ = io.ReadAll(body)
 	return f.err
@@ -31,11 +32,11 @@ func (f *fakeObjects) upload(_ context.Context, j Job, body io.ReadSeeker) error
 
 type fakeJobs struct {
 	called bool
-	job    Job
+	job    jobs.Job
 	err    error
 }
 
-func (f *fakeJobs) createJob(_ context.Context, j Job) error {
+func (f *fakeJobs) createJob(_ context.Context, j jobs.Job) error {
 	f.called, f.job = true, j
 	return f.err
 }

@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/antonybholmes/go-jobs"
 	"github.com/antonybholmes/go-sys/log"
 	"github.com/antonybholmes/go-web"
 	"github.com/antonybholmes/go-web/middleware"
@@ -17,25 +18,12 @@ import (
 	"github.com/google/uuid"
 )
 
-type Job struct {
-	ID          string    `json:"id"`
-	UserID      string    `json:"userId"`
-	Email       string    `json:"email"`
-	Type        string    `json:"type"`
-	Bucket      string    `json:"bucket"`
-	Key         string    `json:"key"`
-	Filename    string    `json:"filename"`
-	ContentType string    `json:"content_type"`
-	Size        int64     `json:"size"`
-	CreatedAt   time.Time `json:"created_at"`
-}
-
 type objectStore interface {
-	upload(ctx context.Context, job Job, body io.ReadSeeker) error
+	upload(ctx context.Context, job jobs.Job, body io.ReadSeeker) error
 }
 
 type jobStore interface {
-	createJob(ctx context.Context, job Job) error
+	createJob(ctx context.Context, job jobs.Job) error
 }
 
 type submitHandler struct {
@@ -96,7 +84,7 @@ func (h *submitHandler) submit(c *gin.Context) {
 		return
 	}
 
-	j := Job{
+	j := jobs.Job{
 		ID:          id.String(),
 		UserID:      user.Subject,
 		Email:       user.Email,

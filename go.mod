@@ -1,12 +1,15 @@
 module go-crispr
 
-go 1.27.1
+go 1.27.4
 
 replace github.com/antonybholmes/go-web => ../go-web
+
+replace github.com/antonybholmes/go-jobs => ../go-jobs
 
 replace github.com/antonybholmes/go-sys => ../go-sys
 
 require (
+	github.com/antonybholmes/go-jobs v0.0.0-00010101000000-000000000000
 	github.com/antonybholmes/go-sys v0.0.0-20261116181218-1bc6278530c3
 	github.com/antonybholmes/go-web v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go-v2 v1.48.0
@@ -15,7 +18,9 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.10
 	github.com/aws/aws-sdk-go-v2/service/sqs v1.53.0
 	github.com/bytedance/gopkg v0.1.4
+	github.com/gin-contrib/cors v1.7.11
 	github.com/gin-gonic/gin v1.12.0
+	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.13.0
 	go.yaml.in/yaml/v4 v4.0.0
@@ -42,7 +47,6 @@ require (
 	github.com/cloudwego/base64x v0.1.7 // indirect
 	github.com/dgryski/go-rendezvous v0.0.0-20200823014737-9f7001d12a5f // indirect
 	github.com/gabriel-vasile/mimetype v1.4.16 // indirect
-	github.com/gin-contrib/cors v1.7.11
 	github.com/gin-contrib/sessions v1.0.2 // indirect
 	github.com/gin-contrib/sse v1.2.1 // indirect
 	github.com/go-playground/locales v0.14.2 // indirect
@@ -50,7 +54,6 @@ require (
 	github.com/go-playground/validator/v10 v10.30.6 // indirect
 	github.com/goccy/go-json v0.12.0 // indirect
 	github.com/goccy/go-yaml v1.19.2 // indirect
-	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
 	github.com/gorilla/sessions v1.2.2 // indirect

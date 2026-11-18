@@ -6,6 +6,7 @@ import (
 	"io"
 	"strings"
 
+	"github.com/antonybholmes/go-jobs"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
@@ -15,7 +16,7 @@ type s3Store struct {
 	client *s3.Client
 }
 
-func (s *s3Store) upload(ctx context.Context, j Job, body io.ReadSeeker) error {
+func (s *s3Store) upload(ctx context.Context, j jobs.Job, body io.ReadSeeker) error {
 	_, err := s.client.PutObject(ctx, &s3.PutObjectInput{
 		Bucket: aws.String(j.Bucket), Key: aws.String(j.Key), Body: body,
 		ContentLength: aws.Int64(j.Size), ContentType: aws.String(j.ContentType),

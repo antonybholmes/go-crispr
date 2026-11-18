@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/antonybholmes/go-jobs"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -18,7 +19,7 @@ type postgresStore struct {
 	pool *pgxpool.Pool
 }
 
-func (s *postgresStore) createJob(ctx context.Context, j Job) error {
+func (s *postgresStore) createJob(ctx context.Context, j jobs.Job) error {
 	payload, err := json.Marshal(j)
 	if err != nil {
 		return fmt.Errorf("marshal job: %w", err)
