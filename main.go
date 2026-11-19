@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"go-jobserver/config"
+	"go-edb-job-server/config"
 
 	"os"
 	"time"

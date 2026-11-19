@@ -1,4 +1,4 @@
-module go-jobserver
+module go-edb-job-server
 
 go 1.27.4
 

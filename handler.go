@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"errors"
-	"go-jobserver/config"
+	"go-edb-job-server/config"
 	"io"
 	"net/http"
 	"strings"
