@@ -12,7 +12,7 @@ type retryPublisher struct {
 	done  chan struct{}
 }
 
-func (p *retryPublisher) publishOne(_ context.Context, _ messageSender) (bool, error) {
+func (p *retryPublisher) PublishOne(_ context.Context, _ MessageSender) (bool, error) {
 	p.calls++
 	if p.calls == 1 {
 		return false, errors.New("temporary failure")
@@ -29,7 +29,7 @@ func TestOutboxRetriesAndStops(t *testing.T) {
 	publisher := &retryPublisher{done: make(chan struct{})}
 	stopped := make(chan struct{})
 	go func() {
-		runOutbox(ctx, publisher, &fakeSender{}, time.Millisecond)
+		runOutbox(ctx, publisher, &FakeSender{}, time.Millisecond)
 		close(stopped)
 	}()
 	select {

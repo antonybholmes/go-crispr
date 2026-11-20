@@ -4,26 +4,28 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	appconfig "go-crispr/config"
+	"go-edb-job-server/config"
 
 	"os"
 	"time"
 
+	awsweb "github.com/antonybholmes/go-mail/aws"
 	"github.com/antonybholmes/go-sys/log"
 	"github.com/antonybholmes/go-web/access"
 	"github.com/antonybholmes/go-web/middleware"
-	"github.com/aws/aws-sdk-go-v2/config"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/bytedance/gopkg/util/logger"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-func run(cfg *appconfig.AppConfig) error {
+func run(cfg *config.AppConfig) error {
 
 	ctx := context.Background()
-	awsCfg, err := config.LoadDefaultConfig(ctx)
+	awsCfg, err := awsconfig.LoadDefaultConfig(ctx)
 	if err != nil {
 		return fmt.Errorf("load AWS configuration: %w", err)
 	}
@@ -46,11 +48,14 @@ func run(cfg *appconfig.AppConfig) error {
 		return fmt.Errorf("initialize schema: %w", err)
 	}
 
-	store := &postgresStore{pool: pool}
-	sender := &sqsSender{client: sqs.NewFromConfig(awsCfg), queueURL: cfg.App.QueueURL}
-	handler := &submitHandler{
-		bucket: cfg.App.Bucket, maxBody: cfg.App.MaxBodyBytes, objects: &s3Store{client: s3.NewFromConfig(awsCfg)},
-		jobs: store,
+	store := &PostgresStore{pool: pool}
+	sender := awsweb.NewSqsSender(sqs.NewFromConfig(awsCfg), cfg.Aws.Sqs.QueueURL)
+	handler := &SubmitHandler{
+		Config:      cfg,
+		bucket:      cfg.Aws.Bucket,
+		maxBody:     cfg.App.MaxBodyBytes,
+		objectStore: &S3Store{client: s3.NewFromConfig(awsCfg)},
+		jobStore:    store,
 	}
 
 	re := access.NewRuleEngine()
@@ -61,13 +66,27 @@ func run(cfg *appconfig.AppConfig) error {
 	rulesMiddleware := middleware.AccessTokenRulesMiddleware(claimsParser, re)
 
 	router := gin.New()
-	router.Use(gin.Logger(), gin.Recovery())
+	router.SetTrustedProxies(cfg.App.TrustedProxies)
+
+	//router.Use(gin.Logger(), gin.Recovery())
+
+	corsConfig := cors.Config{
+		AllowOrigins:     cfg.Cors.AllowOrigins,
+		AllowMethods:     cfg.Cors.AllowMethods,
+		AllowHeaders:     cfg.Cors.AllowHeaders,
+		AllowCredentials: cfg.Cors.AllowCredentials,
+		MaxAge:           time.Duration(cfg.Cors.MaxAge) * time.Second,
+	}
+
+	router.Use(cors.New(corsConfig))                // Check CORS first
+	router.Use(middleware.ErrorHandlerMiddleware()) // Handle errors early
+
 	router.MaxMultipartMemory = cfg.App.MaxBodyBytes // 8 << 20
 
 	v1 := router.Group("/v1")
 
 	crispr := v1.Group("/crispr", rulesMiddleware)
-	crispr.POST("/submit", handler.submit)
+	crispr.POST("/submit", handler.Submit)
 
 	// The outbox runs alongside HTTP so it can publish accepted jobs to SQS.
 	go runOutbox(ctx, store, sender, time.Duration(cfg.App.PollIntervalSec)*time.Second)
@@ -80,15 +99,11 @@ func run(cfg *appconfig.AppConfig) error {
 	return nil
 }
 
-type outboxPublisher interface {
-	publishOne(context.Context, messageSender) (bool, error)
-}
-
 // runOutbox repeatedly delivers pending messages, polling after an empty queue
 // or an error until its context is canceled.
-func runOutbox(ctx context.Context, store outboxPublisher, sender messageSender, interval time.Duration) {
+func runOutbox(ctx context.Context, store OutboxPublisher, sender MessageSender, interval time.Duration) {
 	for ctx.Err() == nil {
-		sent, err := store.publishOne(ctx, sender)
+		sent, err := store.PublishOne(ctx, sender)
 		if err != nil && ctx.Err() == nil {
 			log.Error().Msgf("publish outbox message: %v", err)
 		}
@@ -106,11 +121,11 @@ func runOutbox(ctx context.Context, store outboxPublisher, sender messageSender,
 }
 
 func init() {
-	log.SetAppName(appconfig.AppName)
+	log.SetAppName(config.AppName)
 }
 
 func main() {
-	cfg := appconfig.Instance()
+	cfg := config.Instance()
 
 	err := run(cfg)
 

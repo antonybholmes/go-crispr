@@ -12,29 +12,41 @@ import (
 )
 
 type AppConfig struct {
-	App struct {
-		URL             string   `yaml:"url"`
-		Domain          string   `yaml:"domain"`
-		LogFile         string   `yaml:"logFile"`
-		Port            string   `yaml:"port"`
-		DatabaseURL     string   `yaml:"databaseUrl"`
-		Bucket          string   `yaml:"bucket"`
-		QueueURL        string   `yaml:"queueUrl"`
-		TrustedProxies  []string `yaml:"trustedProxies"`
-		MaxBodyBytes    int64    `yaml:"maxBodyBytes"`
-		PollIntervalSec int      `yaml:"pollIntervalSeconds"`
-	} `yaml:"app"`
 	Auth struct {
 		Keys struct {
 			JwtES256PrivateKey *ecdsa.PrivateKey `yaml:"-"`
 			JwtES256PublicKey  *ecdsa.PublicKey  `yaml:"-"`
 		} `yaml:"-"`
 	} `yaml:"-"`
+	Aws struct {
+		Folder string `yaml:"folder"`
+		Bucket string `yaml:"-"`
+		Sqs    struct {
+			QueueURL string `yaml:"-"`
+		} `yaml:"-"`
+	} `yaml:"-"`
+	App struct {
+		URL             string   `yaml:"url"`
+		Domain          string   `yaml:"domain"`
+		LogFile         string   `yaml:"logFile"`
+		Port            string   `yaml:"port"`
+		DatabaseURL     string   `yaml:"-"`
+		TrustedProxies  []string `yaml:"trustedProxies"`
+		MaxBodyBytes    int64    `yaml:"maxBodyBytes"`
+		PollIntervalSec int      `yaml:"pollIntervalSeconds"`
+	} `yaml:"app"`
+	Cors struct {
+		AllowOrigins     []string `yaml:"allowOrigins"`
+		AllowMethods     []string `yaml:"allowMethods"`
+		AllowHeaders     []string `yaml:"allowHeaders"`
+		AllowCredentials bool     `yaml:"allowCredentials"`
+		MaxAge           int      `yaml:"maxAge"`
+	} `yaml:"cors"`
 }
 
 const (
-	Name       = "CRISPR Job Server"
-	AppName    = "crispr-job-server"
+	Name       = "EDB Job Server"
+	AppName    = "edb-job-server"
 	Copyright  = "Copyright (C) 2026 Antony Holmes"
 	ConfigFile = "config/app.yaml"
 )
@@ -58,6 +70,10 @@ func LoadConfig() *AppConfig {
 		log.Fatal().Msgf("failed to parse config file: %v", err)
 		os.Exit(1)
 	}
+
+	cfg.App.DatabaseURL = envOr("DATABASE_URL", cfg.App.DatabaseURL)
+	cfg.Aws.Bucket = envOr("AWS_BUCKET", cfg.Aws.Bucket)
+	cfg.Aws.Sqs.QueueURL = envOr("AWS_SQS_QUEUE_URL", cfg.Aws.Sqs.QueueURL)
 
 	//
 	// Load EC keys

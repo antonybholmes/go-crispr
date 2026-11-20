@@ -12,18 +12,19 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/antonybholmes/go-jobs"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
 type fakeObjects struct {
 	called bool
-	job    job
+	job    jobs.Job
 	data   []byte
 	err    error
 }
 
-func (f *fakeObjects) upload(_ context.Context, j job, body io.ReadSeeker) error {
+func (f *fakeObjects) Upload(_ context.Context, j jobs.Job, body io.ReadSeeker) error {
 	f.called, f.job = true, j
 	f.data, _ = io.ReadAll(body)
 	return f.err
@@ -31,11 +32,11 @@ func (f *fakeObjects) upload(_ context.Context, j job, body io.ReadSeeker) error
 
 type fakeJobs struct {
 	called bool
-	job    job
+	job    jobs.Job
 	err    error
 }
 
-func (f *fakeJobs) createJob(_ context.Context, j job) error {
+func (f *fakeJobs) CreateJob(_ context.Context, j jobs.Job) error {
 	f.called, f.job = true, j
 	return f.err
 }
@@ -80,9 +81,9 @@ func TestSubmit(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			objects, jobs := &fakeObjects{err: tc.uploadErr}, &fakeJobs{err: tc.dbErr}
-			h := &submitHandler{bucket: "test-bucket", maxBody: tc.maxBody, objects: objects, jobs: jobs}
+			h := &SubmitHandler{bucket: "test-bucket", maxBody: tc.maxBody, objectStore: objects, jobStore: jobs}
 			router := gin.New()
-			router.POST("/submit", h.submit)
+			router.POST("/submit", h.Submit)
 			response := httptest.NewRecorder()
 			router.ServeHTTP(response, tc.request(t))
 			if response.Code != tc.wantStatus || objects.called != tc.wantUpload || jobs.called != tc.wantPersist {

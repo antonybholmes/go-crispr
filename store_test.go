@@ -8,18 +8,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/antonybholmes/go-jobs"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type fakeSender struct {
+type FakeSender struct {
 	id      string
 	payload []byte
 	err     error
 }
 
-func (s *fakeSender) send(_ context.Context, id string, payload []byte) error {
-	s.id, s.payload = id, payload
+func (s *FakeSender) Send(_ context.Context, payload []byte) error {
+	s.payload = payload
 	return s.err
 }
 
@@ -56,35 +57,35 @@ func TestPostgresOutbox(t *testing.T) {
 	if _, err := pool.Exec(ctx, schema); err != nil {
 		t.Fatal(err)
 	}
-	store := &postgresStore{pool: pool}
+	store := &PostgresStore{pool: pool}
 	id, err := uuid.NewV7()
 	if err != nil {
 		t.Fatal(err)
 	}
-	j := job{ID: id.String(), Bucket: "bucket", Key: "key", Filename: "file", ContentType: "text/plain", Size: 5, CreatedAt: time.Now().UTC()}
-	if err := store.createJob(ctx, j); err != nil {
+	j := jobs.Job{ID: id.String(), Bucket: "bucket", Key: "key", Filename: "file", ContentType: "text/plain", Size: 5, CreatedAt: time.Now().UTC()}
+	if err := store.CreateJob(ctx, j); err != nil {
 		t.Fatal(err)
 	}
-	var jobs, pending int
-	if err := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM jobs), (SELECT count(*) FROM job_outbox WHERE published_at IS NULL)").Scan(&jobs, &pending); err != nil || jobs != 1 || pending != 1 {
-		t.Fatalf("job and outbox not committed together: jobs=%d pending=%d err=%v", jobs, pending, err)
+	var jobCount, pending int
+	if err := pool.QueryRow(ctx, "SELECT (SELECT count(*) FROM jobs), (SELECT count(*) FROM job_outbox WHERE published_at IS NULL)").Scan(&jobCount, &pending); err != nil || jobCount != 1 || pending != 1 {
+		t.Fatalf("job and outbox not committed together: jobs=%d pending=%d err=%v", jobCount, pending, err)
 	}
-	sender := &fakeSender{err: errors.New("SQS unavailable")}
-	if sent, err := store.publishOne(ctx, sender); sent || err == nil {
+	sender := &FakeSender{err: errors.New("SQS unavailable")}
+	if sent, err := store.PublishOne(ctx, sender); sent || err == nil {
 		t.Fatalf("expected failed send, got sent=%v err=%v", sent, err)
 	}
 	if err := pool.QueryRow(ctx, "SELECT count(*) FROM job_outbox WHERE published_at IS NULL").Scan(&pending); err != nil || pending != 1 {
 		t.Fatalf("failed send should remain pending: pending=%d err=%v", pending, err)
 	}
 	sender.err = nil
-	if sent, err := store.publishOne(ctx, sender); !sent || err != nil {
+	if sent, err := store.PublishOne(ctx, sender); !sent || err != nil {
 		t.Fatalf("retry failed: sent=%v err=%v", sent, err)
 	}
-	var delivered job
+	var delivered jobs.Job
 	if err := json.Unmarshal(sender.payload, &delivered); err != nil || sender.id != j.ID || delivered.ID != j.ID || delivered.Key != j.Key {
 		t.Fatalf("unexpected message: id=%s payload=%s err=%v", sender.id, sender.payload, err)
 	}
-	if sent, err := store.publishOne(ctx, sender); sent || err != nil {
+	if sent, err := store.PublishOne(ctx, sender); sent || err != nil {
 		t.Fatalf("expected empty outbox: sent=%v err=%v", sent, err)
 	}
 	// An outbox insert failure must roll back the preceding job insert.
@@ -95,10 +96,10 @@ func TestPostgresOutbox(t *testing.T) {
 		CREATE TRIGGER reject_outbox BEFORE INSERT ON job_outbox FOR EACH ROW EXECUTE FUNCTION reject_outbox()`); err != nil {
 		t.Fatal(err)
 	}
-	if err := store.createJob(ctx, second); err == nil {
+	if err := store.CreateJob(ctx, second); err == nil {
 		t.Fatal("expected outbox insert failure")
 	}
-	if err := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE id=$1", second.ID).Scan(&jobs); err != nil || jobs != 0 {
-		t.Fatalf("job insert was not rolled back: count=%d err=%v", jobs, err)
+	if err := pool.QueryRow(ctx, "SELECT count(*) FROM jobs WHERE id=$1", second.ID).Scan(&jobCount); err != nil || jobCount != 0 {
+		t.Fatalf("job insert was not rolled back: count=%d err=%v", jobCount, err)
 	}
 }

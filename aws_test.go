@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/antonybholmes/go-jobs"
+	awsweb "github.com/antonybholmes/go-mail/aws"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -46,30 +48,28 @@ func TestAWSAdapters(t *testing.T) {
 		Region:      "us-east-1",
 		Credentials: aws.NewCredentialsCache(credentials.NewStaticCredentialsProvider("test", "test", "")),
 	}
-	objects := &s3Store{client: s3.NewFromConfig(cfg, func(o *s3.Options) {
+	objects := &S3Store{client: s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(server.URL)
 		o.UsePathStyle = true
 	})}
-	j := job{Bucket: "bucket", Key: "jobs/id/upload", ContentType: "text/plain", Size: 5}
-	if err := objects.upload(context.Background(), j, strings.NewReader("hello")); err != nil {
+	j := jobs.Job{Bucket: "bucket", Key: "jobs/id/upload", ContentType: "text/plain", Size: 5}
+	if err := objects.Upload(context.Background(), j, strings.NewReader("hello")); err != nil {
 		t.Fatal(err)
 	}
 	if objectBody != "hello" {
 		t.Fatalf("unexpected object body %q", objectBody)
 	}
-	sender := &sqsSender{
-		client:   sqs.NewFromConfig(cfg, func(o *sqs.Options) { o.BaseEndpoint = aws.String(server.URL) }),
-		queueURL: server.URL + "/123/jobs.fifo",
-	}
-	if err := sender.send(context.Background(), "job-id", []byte(`{"id":"job-id"}`)); err != nil {
+	sender := awsweb.NewSqsSender(sqs.NewFromConfig(cfg, func(o *sqs.Options) { o.BaseEndpoint = aws.String(server.URL) }), server.URL+"/123/jobs.fifo")
+	if err := sender.Send(context.Background(), []byte(`{"id":"job-id"}`)); err != nil {
 		t.Fatal(err)
 	}
-	if message["QueueUrl"] != sender.queueURL || message["MessageBody"] != `{"id":"job-id"}` || message["MessageGroupId"] != "jobs" || message["MessageDeduplicationId"] != "job-id" {
+
+	if message["QueueUrl"] != sender.QueueURL || message["MessageBody"] != `{"id":"job-id"}` || message["MessageGroupId"] != "jobs" || message["MessageDeduplicationId"] != "job-id" {
 		t.Fatalf("unexpected FIFO message: %#v", message)
 	}
-	sender.queueURL = server.URL + "/123/jobs"
+	sender.QueueURL = server.URL + "/123/jobs"
 	message = nil
-	if err := sender.send(context.Background(), "job-id", []byte(`{"id":"job-id"}`)); err != nil {
+	if err := sender.Send(context.Background(), []byte(`{"id":"job-id"}`)); err != nil {
 		t.Fatal(err)
 	}
 	if _, ok := message["MessageGroupId"]; ok {

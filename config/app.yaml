@@ -2,12 +2,31 @@ app:
   url: https://crispr.rdf-lab.org
   domain: crispr.rdf-lab.org
   logFile: logs/app.log
-  port: "0.0.0.0:8080"
+  port: "0.0.0.0:8090"
   trustedProxies:
     - 127.0.0.1
     - ::1
-  databaseUrl: "postgres://user:password@localhost:5432/dbname"
-  bucket: "my-s3-bucket"
-  queueUrl: "https://sqs.us-east-1.amazonaws.com/123456789012/my-queue"
   maxBodyBytes: 104857600
   pollIntervalSeconds: 10
+
+cors:
+  allowOrigins:
+    - http://localhost:3000
+    - http://localhost:8000
+    - https://crispr.rdf-lab.org
+
+  allowMethods:
+    - GET
+    - POST
+    - PUT
+    - DELETE
+  allowHeaders:
+    - Origin
+    - Content-Type
+    - Authorization
+    - X-CSRF-Token
+  allowCredentials: true
+  maxAge: 43200
+
+aws:
+  folder: "jobs/crispr/"
