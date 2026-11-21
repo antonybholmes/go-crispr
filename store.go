@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"go-edb-job-server/config"
 
+	"github.com/antonybholmes/go-jobs"
 	"github.com/antonybholmes/go-mail"
 	awsmail "github.com/antonybholmes/go-mail/aws"
-	"github.com/antonybholmes/go-sys/jobs"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

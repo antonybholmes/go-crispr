@@ -12,7 +12,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/antonybholmes/go-sys/jobs"
+	"github.com/antonybholmes/go-jobs"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )

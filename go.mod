@@ -8,7 +8,10 @@ replace github.com/antonybholmes/go-sys => ../go-sys
 
 replace github.com/antonybholmes/go-mail => ../go-mail
 
+replace github.com/antonybholmes/go-jobs => ../go-jobs
+
 require (
+	github.com/antonybholmes/go-jobs v0.0.0-20261118211635-0c5edc8c80bd
 	github.com/antonybholmes/go-mail v0.0.0-20261120230506-649df8ca9051
 	github.com/antonybholmes/go-sys v0.0.0-20261118211639-408b038a66d6
 	github.com/antonybholmes/go-web v0.0.0-00010101000000-000000000000
