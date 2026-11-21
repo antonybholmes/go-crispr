@@ -8,8 +8,8 @@ import (
 )
 
 type retryPublisher struct {
-	calls int
 	done  chan struct{}
+	calls int
 }
 
 func (p *retryPublisher) PublishOne(_ context.Context, _ MessageSender) (bool, error) {

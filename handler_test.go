@@ -18,10 +18,10 @@ import (
 )
 
 type fakeObjects struct {
-	called bool
+	err    error
 	job    jobs.Job
 	data   []byte
-	err    error
+	called bool
 }
 
 func (f *fakeObjects) Upload(_ context.Context, j jobs.Job, body io.ReadSeeker) error {
@@ -31,9 +31,9 @@ func (f *fakeObjects) Upload(_ context.Context, j jobs.Job, body io.ReadSeeker) 
 }
 
 type fakeJobs struct {
-	called bool
-	job    jobs.Job
 	err    error
+	job    jobs.Job
+	called bool
 }
 
 func (f *fakeJobs) CreateJob(_ context.Context, j jobs.Job) error {

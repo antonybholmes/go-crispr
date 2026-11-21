@@ -8,6 +8,8 @@ app:
     - ::1
   maxBodyBytes: 104857600
   pollIntervalSeconds: 10
+  email:
+    from: "Experiments Team <donotreply@rdf-lab.org>"
 
 cors:
   allowOrigins:

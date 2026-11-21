@@ -6,7 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go-edb-job-server/config"
 
+	"github.com/antonybholmes/go-mail"
+	awsmail "github.com/antonybholmes/go-mail/aws"
 	"github.com/antonybholmes/go-sys/jobs"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -14,7 +17,9 @@ import (
 
 type (
 	PostgresStore struct {
-		pool *pgxpool.Pool
+		Config      *config.AppConfig
+		EmailSender *awsmail.SQSEmailQueue
+		pool        *pgxpool.Pool
 	}
 
 	MessageSender interface {
@@ -71,15 +76,19 @@ func (s *PostgresStore) PublishOne(ctx context.Context, sender MessageSender) (b
 	}
 	defer tx.Rollback(context.Background())
 
-	var id string
+	var userID string
+	var email string
+	job := jobs.BaseJob{}
 	var payload []byte
 
 	err = tx.QueryRow(ctx, `SELECT 
-		job_id::text, 
+		job_id::text,
+		user_id::text,
+		email,
 		payload 
 		FROM job_outbox
 		WHERE published_at IS NULL ORDER BY created_at, job_id
-		FOR UPDATE SKIP LOCKED LIMIT 1`).Scan(&id, &payload)
+		FOR UPDATE SKIP LOCKED LIMIT 1`).Scan(&job.ID, &userID, &email, &payload)
 
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
@@ -88,16 +97,23 @@ func (s *PostgresStore) PublishOne(ctx context.Context, sender MessageSender) (b
 		return false, fmt.Errorf("select outbox message: %w", err)
 	}
 
-	//NewJobSubmittedMailItem(job *jobs.BaseJob, userID, name, to, from string)
+	mailItem := mail.NewJobSubmittedMailItem(&job, userID, email, s.Config.App.Email.From)
+
+	if err := s.EmailSender.SendMail(ctx, mailItem); err != nil {
+		return false, fmt.Errorf("send email for job %s: %w", job.ID, err)
+	}
 
 	if err := sender.Send(ctx, payload); err != nil {
-		return false, fmt.Errorf("send job %s: %w", id, err)
+		return false, fmt.Errorf("send job %s: %w", job.ID, err)
 	}
-	if _, err := tx.Exec(ctx, `UPDATE job_outbox SET published_at = now() WHERE job_id = $1`, id); err != nil {
-		return false, fmt.Errorf("mark job %s published: %w", id, err)
+
+	if _, err := tx.Exec(ctx, `UPDATE job_outbox SET published_at = now() WHERE job_id = $1`, job.ID); err != nil {
+		return false, fmt.Errorf("mark job %s published: %w", job.ID, err)
 	}
+
 	if err := tx.Commit(ctx); err != nil {
-		return false, fmt.Errorf("commit published job %s: %w", id, err)
+		return false, fmt.Errorf("commit published job %s: %w", job.ID, err)
 	}
+
 	return true, nil
 }

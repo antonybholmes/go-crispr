@@ -9,7 +9,7 @@ import (
 	"os"
 	"time"
 
-	awsweb "github.com/antonybholmes/go-mail/aws"
+	awsmail "github.com/antonybholmes/go-mail/aws"
 	"github.com/antonybholmes/go-sys/log"
 	"github.com/antonybholmes/go-web/access"
 	"github.com/antonybholmes/go-web/middleware"
@@ -46,13 +46,19 @@ func run(cfg *config.AppConfig) error {
 
 	if _, err := pool.Exec(ctx, schema); err != nil {
 		return fmt.Errorf("initialize schema: %w", err)
+
 	}
 
-	store := &PostgresStore{pool: pool}
-	sender := awsweb.NewSQSSender(sqs.NewFromConfig(awsCfg), cfg.Aws.Sqs.QueueURL)
+	sqsClient := sqs.NewFromConfig(awsCfg)
+
+	mailer := awsmail.NewSQSEmailQueue(sqsClient, cfg.AWS.SQS.Email.QueueURL)
+
+	store := &PostgresStore{Config: cfg, pool: pool, EmailSender: mailer}
+	sender := awsmail.NewSQSSender(sqsClient, cfg.AWS.SQS.Jobs.QueueURL)
+
 	handler := &SubmitHandler{
 		Config:      cfg,
-		bucket:      cfg.Aws.Bucket,
+		bucket:      cfg.AWS.Bucket,
 		maxBody:     cfg.App.MaxBodyBytes,
 		objectStore: &S3Store{client: s3.NewFromConfig(awsCfg)},
 		jobStore:    store,

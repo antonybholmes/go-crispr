@@ -14,9 +14,9 @@ import (
 )
 
 type FakeSender struct {
+	err     error
 	id      string
 	payload []byte
-	err     error
 }
 
 func (s *FakeSender) Send(_ context.Context, payload []byte) error {

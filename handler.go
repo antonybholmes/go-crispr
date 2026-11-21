@@ -27,11 +27,11 @@ type JobStore interface {
 }
 
 type SubmitHandler struct {
+	objectStore ObjectStore
+	jobStore    JobStore
 	Config      *config.AppConfig
 	bucket      string
 	maxBody     int64
-	objectStore ObjectStore
-	jobStore    JobStore
 }
 
 func (h *SubmitHandler) Submit(c *gin.Context) {
