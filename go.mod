@@ -4,8 +4,7 @@ go 1.27.4
 
 replace github.com/antonybholmes/go-web => ../go-web
 
-replace github.com/antonybholmes/go-jobs => ../go-jobs
-
+ 
 replace github.com/antonybholmes/go-sys => ../go-sys
 
 replace github.com/antonybholmes/go-mail => ../go-mail

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/antonybholmes/go-jobs"
+	"github.com/antonybholmes/go-sys/jobs"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -26,7 +26,6 @@ type (
 	}
 )
 
-//go:embed schema.sql
 var schema string
 
 func (s *PostgresStore) CreateJob(ctx context.Context, j jobs.Job) error {
