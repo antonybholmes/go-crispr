@@ -59,7 +59,7 @@ func TestAWSAdapters(t *testing.T) {
 	if objectBody != "hello" {
 		t.Fatalf("unexpected object body %q", objectBody)
 	}
-	sender := awsweb.NewSqsSender(sqs.NewFromConfig(cfg, func(o *sqs.Options) { o.BaseEndpoint = aws.String(server.URL) }), server.URL+"/123/jobs.fifo")
+	sender := awsweb.NewSQSSender(sqs.NewFromConfig(cfg, func(o *sqs.Options) { o.BaseEndpoint = aws.String(server.URL) }), server.URL+"/123/jobs.fifo")
 	if err := sender.Send(context.Background(), []byte(`{"id":"job-id"}`)); err != nil {
 		t.Fatal(err)
 	}

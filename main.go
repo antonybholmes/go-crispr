@@ -49,7 +49,7 @@ func run(cfg *config.AppConfig) error {
 	}
 
 	store := &PostgresStore{pool: pool}
-	sender := awsweb.NewSqsSender(sqs.NewFromConfig(awsCfg), cfg.Aws.Sqs.QueueURL)
+	sender := awsweb.NewSQSSender(sqs.NewFromConfig(awsCfg), cfg.Aws.Sqs.QueueURL)
 	handler := &SubmitHandler{
 		Config:      cfg,
 		bucket:      cfg.Aws.Bucket,

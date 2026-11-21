@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     id uuid PRIMARY KEY,
     user_id uuid NOT NULL,
     email text NOT NULL,
+    name text,
+    description text,
     -- The type of job (e.g., "email", "crispr")
     type text NOT NULL,
     -- The S3 bucket where the object is stored

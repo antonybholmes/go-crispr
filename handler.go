@@ -84,17 +84,21 @@ func (h *SubmitHandler) Submit(c *gin.Context) {
 		return
 	}
 
+	userID := user.Subject
+
+	baseJob := jobs.BaseJob{
+		ID:        id.String(),
+		Type:      "crispr",
+		CreatedAt: time.Now().UTC(),
+	}
+
 	j := jobs.Job{
-		ID:          id.String(),
-		UserID:      user.Subject,
-		Email:       user.Email,
-		Type:        "crispr", // or "crispr" depending on the job type
+		BaseJob:     baseJob,
 		Bucket:      h.bucket,
-		Key:         "users/" + user.Subject + "/jobs/crispr/" + id.String() + "/upload",
+		Key:         "users/" + userID + "/jobs/crispr/" + id.String() + "/upload",
 		Filename:    fileHeader.Filename,
 		ContentType: contentType,
 		Size:        fileHeader.Size,
-		CreatedAt:   time.Now().UTC(),
 	}
 
 	if err := h.objectStore.Upload(c.Request.Context(), j, file); err != nil {

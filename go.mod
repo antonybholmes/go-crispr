@@ -4,15 +4,13 @@ go 1.27.4
 
 replace github.com/antonybholmes/go-web => ../go-web
 
- 
 replace github.com/antonybholmes/go-sys => ../go-sys
 
 replace github.com/antonybholmes/go-mail => ../go-mail
 
 require (
-	github.com/antonybholmes/go-jobs v0.0.0-00010101000000-000000000000
 	github.com/antonybholmes/go-mail v0.0.0-00010101000000-000000000000
-	github.com/antonybholmes/go-sys v0.0.0-20261116181218-1bc6278530c3
+	github.com/antonybholmes/go-sys v0.0.0-20261118211639-408b038a66d6
 	github.com/antonybholmes/go-web v0.0.0-00010101000000-000000000000
 	github.com/aws/aws-sdk-go-v2 v1.48.0
 	github.com/aws/aws-sdk-go-v2/config v1.33.19
@@ -38,6 +36,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.13 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.12 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sesv2 v1.79.9 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.13.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.39.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.44.5 // indirect
@@ -63,6 +62,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.3 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/klauspost/compress v1.20.4 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.2 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
 	github.com/matoous/go-nanoid/v2 v2.1.0 // indirect
@@ -70,13 +70,16 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
+	github.com/panjf2000/ants v1.3.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
+	github.com/pierrec/lz4/v4 v4.1.33 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.65.0 // indirect
 	github.com/redis/go-redis/v9 v9.23.0 // indirect
 	github.com/richardlehane/mscfb v1.0.9 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/rs/zerolog v1.35.1 // indirect
+	github.com/segmentio/kafka-go v0.4.51 // indirect
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.2 // indirect

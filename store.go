@@ -87,6 +87,9 @@ func (s *PostgresStore) PublishOne(ctx context.Context, sender MessageSender) (b
 	if err != nil {
 		return false, fmt.Errorf("select outbox message: %w", err)
 	}
+
+	//NewJobSubmittedMailItem(job *jobs.BaseJob, userID, name, to, from string)
+
 	if err := sender.Send(ctx, payload); err != nil {
 		return false, fmt.Errorf("send job %s: %w", id, err)
 	}
